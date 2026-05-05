@@ -1,0 +1,87 @@
+zabbix_export:
+  version: '7.0'
+  template_groups:
+    - uuid: 7df96b18c230490a9a0a9e2307226339
+      name: Templates/Web
+  templates:
+    - uuid: a7f1e2c1d3b44f1ea001d3a0c0a2b001
+      template: 'Apache by Zabbix agent (custom)'
+      name: 'Apache by Zabbix agent (custom)'
+      description: |
+        Apache HTTP Server template using mod_status auto endpoint.
+        Author: Vasilii Zakharov <vasiliiazakharov@gmail.com>
+      groups:
+        - name: Templates/Web
+      macros:
+        - macro: '{$ZBX.APACHE.ENDPOINT}'
+          value: '127.0.0.1'
+          description: 'host:port of mod_status auto endpoint'
+        - macro: '{$ZBX.APACHE.MAX_WORKERS}'
+          value: '256'
+          description: 'MaxRequestWorkers; tune to match Apache config'
+        - macro: '{$ZBX.APACHE.BUSY.HIGH.PCT}'
+          value: '80'
+          description: 'BusyWorkers high threshold, percent of max'
+      items:
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b101
+          name: 'Apache: BusyWorkers'
+          key: 'apache.busy_workers[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: UNSIGNED
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b102
+          name: 'Apache: IdleWorkers'
+          key: 'apache.idle_workers[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: UNSIGNED
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b103
+          name: 'Apache: ReqPerSec'
+          key: 'apache.req_per_sec[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: FLOAT
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b104
+          name: 'Apache: BytesPerSec'
+          key: 'apache.bytes_per_sec[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: FLOAT
+          units: B
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b105
+          name: 'Apache: BytesPerReq'
+          key: 'apache.bytes_per_req[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: FLOAT
+          units: B
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b106
+          name: 'Apache: Uptime'
+          key: 'apache.uptime[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 5m
+          value_type: UNSIGNED
+          units: uptime
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b107
+          name: 'Apache: CPU load'
+          key: 'apache.cpu_load[{$ZBX.APACHE.ENDPOINT}]'
+          delay: 60s
+          value_type: FLOAT
+          units: '%'
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b108
+          name: 'Apache: Scoreboard W (sending reply)'
+          key: 'apache.scoreboard[{$ZBX.APACHE.ENDPOINT},W]'
+          delay: 60s
+          value_type: UNSIGNED
+        - uuid: b2f1e2c1d3b44f1ea001d3a0c0a2b109
+          name: 'Apache: Scoreboard K (keepalive)'
+          key: 'apache.scoreboard[{$ZBX.APACHE.ENDPOINT},K]'
+          delay: 60s
+          value_type: UNSIGNED
+      triggers:
+        - uuid: c2f1e2c1d3b44f1ea001d3a0c0a2c001
+          expression: 'nodata(/Apache by Zabbix agent (custom)/apache.busy_workers[{$ZBX.APACHE.ENDPOINT}],5m)=1'
+          name: 'Apache: mod_status unreachable'
+          priority: HIGH
+        - uuid: c2f1e2c1d3b44f1ea001d3a0c0a2c002
+          expression: 'last(/Apache by Zabbix agent (custom)/apache.busy_workers[{$ZBX.APACHE.ENDPOINT}])>{$ZBX.APACHE.MAX_WORKERS}*{$ZBX.APACHE.BUSY.HIGH.PCT}/100'
+          name: 'Apache: BusyWorkers utilization is high'
+          priority: WARNING
+        - uuid: c2f1e2c1d3b44f1ea001d3a0c0a2c003
+          expression: 'last(/Apache by Zabbix agent (custom)/apache.idle_workers[{$ZBX.APACHE.ENDPOINT}])=0 and last(/Apache by Zabbix agent (custom)/apache.busy_workers[{$ZBX.APACHE.ENDPOINT}])>0'
+          name: 'Apache: no idle workers available'
+          priority: AVERAGE
